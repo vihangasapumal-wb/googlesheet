@@ -560,7 +560,7 @@
       document.getElementById('headerTabName').textContent = CONFIG.tabName;
       document.getElementById('tableTabLabel').textContent = CONFIG.tabName;
 
-      const gvizCsvUrl = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(CONFIG.sheetId)}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(CONFIG.tabName)}`;
+const url = `https://docs.google.com/spreadsheets/d/13-zOFdS_F3jh_sXnLoScL3scBxfwEmLj4Bhlj13GpWg/export?format=csv&gid=YOUR_TAB_GID`;
 
       try {
         const response = await fetch(gvizCsvUrl, { cache: 'no-store' });
