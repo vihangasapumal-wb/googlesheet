@@ -1,83 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Live Google Sheet</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f6f8; }
-    h1 { font-size: 1.4rem; }
-    #status { color: #666; font-size: 0.85rem; margin-bottom: 10px; }
-    table { border-collapse: collapse; width: 100%; background: #fff; }
-    th, td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; }
-    th { background: #2d6cdf; color: #fff; }
-    tr:nth-child(even) { background: #f9f9f9; }
-    .wrap { overflow-x: auto; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Sheet Dashboard</title>
+<style>
+  :root { --bg:#f3f5f9; --card:#fff; --ink:#1c2333; --muted:#6b7385; --brand:#2d6cdf; --line:#e3e7ef; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, Arial, sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:var(--brand); color:#fff; padding:14px 16px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; }
+  header h1 { margin:0; font-size:1.15rem; }
+  .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  select, input, button { font:inherit; padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:#fff; color:var(--ink); }
+  button { cursor:pointer; background:#fff; }
+  main { padding:14px; max-width:1300px; margin:0 auto; }
+  #status { font-size:.8rem; color:var(--muted); margin:2px 0 12px; }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:14px; }
+  .kpi, .card { background:var(--card); border-radius:12px; padding:14px; box-shadow:0 1px 3px rgba(0,0,0,.07); }
+  .kpi .v { font-size:1.6rem; font-weight:700; margin-top:4px; word-break:break-word; }
+  .kpi .l { font-size:.8rem; color:var(--muted); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin-bottom:14px; }
+  .card h2 { margin:0 0 10px; font-size:1rem; display:flex; justify-content:space-between; gap:8px; align-items:center; }
+  .row { display:grid; grid-template-columns:minmax(70px,32%) 1fr auto; gap:8px; align-items:center; margin:6px 0; font-size:.88rem; }
+  .row .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .track { background:#eef1f7; border-radius:6px; height:16px; overflow:hidden; }
+  .fill { height:100%; border-radius:6px; min-width:2px; border:1px solid rgba(0,0,0,.12); }
+  .val { font-variant-numeric:tabular-nums; font-weight:600; }
+  .tablewrap { overflow:auto; max-height:420px; border:1px solid var(--line); border-radius:8px; }
+  table { border-collapse:collapse; width:100%; font-size:.85rem; }
+  th, td { padding:7px 10px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
+  th { position:sticky; top:0; background:#eef2fb; }
+  .tools { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+  .tools input { flex:1; min-width:160px; }
+  @media (max-width:600px){ .row { grid-template-columns:90px 1fr auto; } .kpi .v{font-size:1.3rem;} }
+  @media print { header .bar, .tools, .tablewrap, button { display:none !important; } body{background:#fff;} }
+</style>
 </head>
 <body>
-  <h1>Live Google Sheet Data</h1>
-  <div id="status">Loading...</div>
-  <div class="wrap"><table id="data"></table></div>
+<header>
+  <h1>📊 Live Sheet Dashboard</h1>
+  <div class="bar">
+    <select id="tab" title="Sheet / tab"></select>
+    <select id="measure" title="What to total"></select>
+    <button id="refresh">⟳ Refresh</button>
+    <button onclick="window.print()">🖨 Print</button>
+  </div>
+</header>
+<main>
+  <div id="status">Loading…</div>
+  <div class="kpis" id="kpis"></div>
+  <div class="grid" id="charts"></div>
+  <div class="card">
+    <h2>Custom summary</h2>
+    <div class="tools"><select id="customCol"></select></div>
+    <div id="customChart"></div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h2>Data</h2>
+    <div class="tools"><input id="search" type="search" placeholder="Search rows…"></div>
+    <div class="tablewrap"><table id="table"></table></div>
+  </div>
+</main>
 
-  <script>
-    // ====== EDIT THESE TWO LINES ======
-    const SHEET_ID  = "191KKB7bhhMGN_Y6YUFRgryHpMltASwDNDfP_gIWnm24";  // the long ID in the sheet URL
-    const SHEET_TAB = "Sheet1";                     // exact name of the tab
-    const REFRESH_SECONDS = 30;                     // auto-refresh interval
-    // ==================================
+<script>
+// ============ EDIT THIS PART ============
+const SHEET_ID = "13-zOFdS_F3jh_sXnLoScL3scBxfwEmLj4Bhlj13GpWg";
+// Put the EXACT tab names from the bottom of your Google Sheet here:
+const TABS = ["Sheet1"];
+const REFRESH_SECONDS = 60;
+// Header words that should get an automatic chart (color, size, item, etc.):
+const AUTO_CHART_WORDS = /colou?r|size|item|product|name|category|type|style|brand|model|supplier|customer|status|location/i;
+// ========================================
 
-    const URL_CSV =
-      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}`;
+const PALETTE = ["#2d6cdf","#e8590c","#2f9e44","#ae3ec9","#f08c00","#0c8599","#d6336c","#5c940d","#495057","#1971c2","#c92a2a","#099268"];
+let headers = [], data = [], state = { measure: "" };
 
-    // Small CSV parser (handles quotes and commas inside cells)
-    function parseCSV(text) {
-      const rows = []; let row = [], cell = "", inQuotes = false;
-      for (let i = 0; i < text.length; i++) {
-        const c = text[i], n = text[i + 1];
-        if (inQuotes) {
-          if (c === '"' && n === '"') { cell += '"'; i++; }
-          else if (c === '"') inQuotes = false;
-          else cell += c;
-        } else if (c === '"') inQuotes = true;
-        else if (c === ",") { row.push(cell); cell = ""; }
-        else if (c === "\n" || c === "\r") {
-          if (c === "\r" && n === "\n") i++;
-          row.push(cell); rows.push(row); row = []; cell = "";
-        } else cell += c;
-      }
-      if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
-      return rows;
-    }
+const $ = id => document.getElementById(id);
+const csvUrl = tab => `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
 
-    function render(rows) {
-      const table = document.getElementById("data");
-      table.innerHTML = "";
-      rows.forEach((r, i) => {
-        const tr = document.createElement("tr");
-        r.forEach(v => {
-          const td = document.createElement(i === 0 ? "th" : "td");
-          td.textContent = v;          // textContent = safe from HTML injection
-          tr.appendChild(td);
-        });
-        table.appendChild(tr);
-      });
-    }
+function parseCSV(text) {
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], n = text[i+1];
+    if (q) { if (c === '"' && n === '"') { cell += '"'; i++; } else if (c === '"') q = false; else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && n === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += c;
+  }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+const num = v => { const n = parseFloat(String(v).replace(/[^0-9.\-]/g, "")); return isNaN(n) ? null : n; };
+const fmt = n => Number.isInteger(n) ? n.toLocaleString() : n.toLocaleString(undefined,{maximumFractionDigits:2});
+function validColor(v) { const s = new Option().style; s.color = ""; s.color = String(v).trim().toLowerCase(); return s.color !== ""; }
 
-    async function load() {
-      const status = document.getElementById("status");
-      try {
-        const res = await fetch(URL_CSV, { cache: "no-store" });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        render(parseCSV(await res.text()));
-        status.textContent = "Last updated: " + new Date().toLocaleTimeString();
-      } catch (e) {
-        status.textContent = "Could not load sheet. Check the Sheet ID, tab name and sharing. (" + e.message + ")";
-      }
-    }
+function numericCols() {
+  return headers.map((h,i)=>i).filter(i => {
+    const vals = data.map(r => r[i]).filter(v => v !== "" && v != null);
+    if (!vals.length) return false;
+    return vals.filter(v => num(v) !== null && /^[\s$€£Rs.,\-0-9]+$/.test(v)).length / vals.length >= 0.8;
+  });
+}
 
-    load();
-    setInterval(load, REFRESH_SECONDS * 1000);
-  </script>
+function summarize(col) {
+  const m = new Map(), mi = state.measure === "" ? -1 : +state.measure;
+  data.forEach(r => {
+    const k = (r[col] || "").trim() || "(blank)";
+    const add = mi < 0 ? 1 : (num(r[mi]) || 0);
+    m.set(k, (m.get(k) || 0) + add);
+  });
+  return [...m.entries()].sort((a,b) => b[1]-a[1]);
+}
+
+function bars(col, container, max = 12) {
+  let list = summarize(col);
+  if (list.length > max) {
+    const rest = list.slice(max).reduce((s,x)=>s+x[1],0);
+    list = list.slice(0, max).concat([["Others", rest]]);
+  }
+  const top = Math.max(...list.map(x=>x[1]), 1);
+  const useColor = /colou?r/i.test(headers[col]);
+  container.innerHTML = "";
+  list.forEach(([name, v], i) => {
+    const row = document.createElement("div"); row.className = "row";
+    const n = document.createElement("div"); n.className = "name"; n.textContent = name; n.title = name;
+    const t = document.createElement("div"); t.className = "track";
+    const f = document.createElement("div"); f.className = "fill";
+    f.style.width = (v/top*100) + "%";
+    f.style.background = (useColor && validColor(name)) ? name : PALETTE[i % PALETTE.length];
+    t.appendChild(f);
+    const val = document.createElement("div"); val.className = "val"; val.textContent = fmt(v);
+    row.append(n, t, val); container.appendChild(row);
+  });
+}
+
+function render() {
+  const mi = state.measure === "" ? -1 : +state.measure;
+  const unit = mi < 0 ? "rows" : headers[mi];
+
+  // KPIs
+  const kp = $("kpis"); kp.innerHTML = "";
+  const addK = (l, v) => { const d = document.createElement("div"); d.className = "kpi";
+    d.innerHTML = '<div class="l"></div><div class="v"></div>'; d.children[0].textContent = l; d.children[1].textContent = v; kp.appendChild(d); };
+  addK("Total rows", fmt(data.length));
+  numericCols().slice(0,3).forEach(i => addK("Total " + headers[i], fmt(data.reduce((s,r)=>s+(num(r[i])||0),0))));
+  headers.forEach((h,i) => { if (AUTO_CHART_WORDS.test(h) && kp.children.length < 6)
+    addK("Unique " + h, fmt(new Set(data.map(r=>(r[i]||"").trim()).filter(Boolean)).size)); });
+
+  // Auto charts
+  const ch = $("charts"); ch.innerHTML = "";
+  headers.forEach((h,i) => {
+    if (!AUTO_CHART_WORDS.test(h) || numericCols().includes(i)) return;
+    const card = document.createElement("div"); card.className = "card";
+    const t = document.createElement("h2"); t.innerHTML = "<span></span><small style='color:#6b7385;font-weight:400'></small>";
+    t.children[0].textContent = h + " wise"; t.children[1].textContent = unit;
+    const body = document.createElement("div");
+    card.append(t, body); ch.appendChild(card); bars(i, body);
+  });
+  if (!ch.children.length) ch.innerHTML = '<div class="card">No columns like Color / Size / Item found — use “Custom summary” below.</div>';
+
+  // Custom
+  bars(+$("customCol").value || 0, $("customChart"), 30);
+  renderTable();
+}
+
+function renderTable() {
+  const q = $("search").value.toLowerCase();
+  const tb = $("table"); tb.innerHTML = "";
+  const hr = document.createElement("tr");
+  headers.forEach(h => { const th = document.createElement("th"); th.textContent = h; hr.appendChild(th); });
+  tb.appendChild(hr);
+  data.filter(r => !q || r.join(" ").toLowerCase().includes(q)).slice(0, 1000).forEach(r => {
+    const tr = document.createElement("tr");
+    headers.forEach((_,i) => { const td = document.createElement("td"); td.textContent = r[i] || ""; tr.appendChild(td); });
+    tb.appendChild(tr);
+  });
+}
+
+async function load() {
+  const tab = $("tab").value, st = $("status");
+  try {
+    st.textContent = "Loading " + tab + "…";
+    const res = await fetch(csvUrl(tab), { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const rows = parseCSV(await res.text()).filter(r => r.some(c => c.trim() !== ""));
+    if (!rows.length) throw new Error("tab is empty");
+    headers = rows[0].map((h,i) => h.trim() || "Column " + (i+1));
+    data = rows.slice(1);
+    // keep measure choices
+    const prev = state.measure;
+    $("measure").innerHTML = '<option value="">Count rows</option>';
+    numericCols().forEach(i => $("measure").add(new Option("Total " + headers[i], i)));
+    $("measure").value = [...$("measure").options].some(o=>o.value===prev) ? prev : "";
+    state.measure = $("measure").value;
+    const prevCol = $("customCol").value;
+    $("customCol").innerHTML = "";
+    headers.forEach((h,i) => $("customCol").add(new Option("Group by: " + h, i)));
+    if (prevCol && +prevCol < headers.length) $("customCol").value = prevCol;
+    render();
+    st.textContent = `Tab “${tab}” · ${data.length} rows · updated ${new Date().toLocaleTimeString()}`;
+  } catch (e) {
+    st.textContent = `Could not load tab “${tab}” (${e.message}). Check the tab name in TABS and that sharing is “Anyone with the link – Viewer”.`;
+  }
+}
+
+TABS.forEach(t => $("tab").add(new Option(t, t)));
+$("tab").onchange = load;
+$("refresh").onclick = load;
+$("measure").onchange = e => { state.measure = e.target.value; render(); };
+$("customCol").onchange = () => bars(+$("customCol").value, $("customChart"), 30);
+$("search").oninput = renderTable;
+load();
+setInterval(load, REFRESH_SECONDS * 1000);
+</script>
 </body>
 </html>
