@@ -4,589 +4,361 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Board Meeting Executive Dashboard | Production & Inventory Intelligence</title>
-  <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js via CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-          },
-        },
-      },
-    };
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } };
   </script>
   <style>
-    /* Custom subtle scrollbars & print optimizations */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(148, 163, 184, 0.4);
-      border-radius: 9999px;
-    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148,163,184,.4); border-radius: 9999px; }
     @media print {
-      .no-print {
-        display: none !important;
-      }
-      body {
-        background: #ffffff !important;
-        color: #0f172a !important;
-      }
+      .no-print { display: none !important; }
+      body { background: #fff !important; color: #0f172a !important; }
+      header { position: static !important; }
     }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased transition-colors duration-200">
 
-  <!-- Top Executive Navigation Header -->
+  <!-- Header -->
   <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 shrink-0 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white">Board Decision & Inventory Portal</h1>
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight">Board Decision & Inventory Portal</h1>
             <span id="connectionBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-              Connecting...
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Connecting...
             </span>
           </div>
-          <p class="text-xs text-slate-500 dark:text-slate-400">
-            Live Google Sheets Database • Sheet ID: <span id="headerSheetId" class="font-mono">13-zOF...GpWg</span> • Tab: <span id="headerTabName" class="font-semibold">1780</span>
+          <p class="text-xs text-slate-500 dark:text-slate-400 truncate">
+            Tab: <span id="headerTabName" class="font-semibold">1780</span> •
+            <a id="openSheetLink" href="#" target="_blank" rel="noopener" class="text-indigo-600 dark:text-indigo-400 underline">Open Google Sheet ↗</a> •
+            Last sync: <span id="lastSync">—</span>
           </p>
         </div>
       </div>
 
-      <!-- Header Controls -->
       <div class="flex flex-wrap items-center gap-2 no-print">
-        <button onclick="syncGoogleSheet()" id="syncBtn" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition active:scale-95">
-          <svg id="syncIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
+        <button onclick="syncGoogleSheet()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition active:scale-95">
+          <svg id="syncIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           Sync Live Sheet
         </button>
-
-        <button onclick="toggleModal('settingsModal')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          DB & GitHub Setup
-        </button>
-
-        <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-          </svg>
-          Export / Print
-        </button>
-
-        <button onclick="toggleTheme()" aria-label="Toggle theme" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition">
-          <svg id="themeIconSun" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-          <svg id="themeIconMoon" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-          </svg>
-        </button>
+        <button onclick="toggleModal('settingsModal')" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition">⚙ Sheet Setup</button>
+        <button onclick="window.print()" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition">🖨 Print</button>
+        <button onclick="toggleTheme()" aria-label="Toggle theme" class="px-3 py-2 rounded-xl text-xs sm:text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition">🌓</button>
       </div>
     </div>
   </header>
 
-  <!-- Notification / Status Toast Banner -->
+  <!-- Status banner -->
   <div id="statusBanner" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 no-print">
     <div id="statusBannerInner" class="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-sm border">
-      <div class="flex items-center gap-2.5">
-        <span id="statusBannerIcon"></span>
-        <span id="statusBannerText" class="font-medium"></span>
-      </div>
-      <button onclick="document.getElementById('statusBanner').classList.add('hidden')" class="text-xs font-semibold underline opacity-80 hover:opacity-100">Dismiss</button>
+      <span id="statusBannerText" class="font-medium"></span>
+      <button onclick="document.getElementById('statusBanner').classList.add('hidden')" class="text-xs font-semibold underline opacity-80 hover:opacity-100 shrink-0">Dismiss</button>
     </div>
   </div>
 
-  <!-- Main Dashboard Container -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-    <!-- Section 1: Executive KPI Cards (Highs, Lows & Critical Alerts) -->
-    <section aria-label="Executive Summary KPIs" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- KPI 1: Total Orders -->
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Order Demand</span>
-          <span class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-          </span>
-        </div>
+    <!-- KPI cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Order Demand</span>
         <div class="mt-3 flex items-baseline gap-2">
-          <p id="kpiTotalOrders" class="text-3xl font-extrabold text-slate-900 dark:text-white">171</p>
-          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">units ordered</span>
+          <p id="kpiTotalOrders" class="text-3xl font-extrabold">0</p>
+          <span class="text-xs text-slate-500 dark:text-slate-400">units ordered</span>
         </div>
-        <p id="kpiActiveRoutes" class="mt-2 text-xs text-slate-600 dark:text-slate-400">Across 2 active distribution routes (8 shops)</p>
+        <p id="kpiActiveRoutes" class="mt-2 text-xs text-slate-600 dark:text-slate-400"></p>
       </div>
 
-      <!-- KPI 2: Net Balance / Critical Deficit -->
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border-2 border-rose-200 dark:border-rose-900/60 shadow-sm hover:shadow-md transition relative overflow-hidden">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">Net Stock Balance (Low)</span>
-          <span class="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/70 text-rose-600 dark:text-rose-400">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </span>
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border-2 border-rose-200 dark:border-rose-900/60 shadow-sm">
+        <span class="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">Net Stock Balance</span>
+        <div class="mt-3 flex flex-wrap items-baseline gap-2">
+          <p id="kpiNetBalance" class="text-3xl font-extrabold text-rose-600 dark:text-rose-400">0</p>
+          <span id="kpiNetTag" class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">CRITICAL DEFICIT</span>
         </div>
-        <div class="mt-3 flex items-baseline gap-2">
-          <p id="kpiNetBalance" class="text-3xl font-extrabold text-rose-600 dark:text-rose-400">-171</p>
-          <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">CRITICAL DEFICIT</span>
-        </div>
-        <p id="kpiStockProd" class="mt-2 text-xs text-slate-600 dark:text-slate-400">Stock: 0 units • Production logged: 0 units</p>
+        <p id="kpiStockProd" class="mt-2 text-xs text-slate-600 dark:text-slate-400"></p>
       </div>
 
-      <!-- KPI 3: Highest Demand Color -->
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Highest Demand (High)</span>
-          <span class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-          </span>
-        </div>
-        <div class="mt-3 flex items-baseline gap-2">
-          <p id="kpiHighColor" class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">Black & Beige</p>
-        </div>
-        <p id="kpiHighSub" class="mt-2 text-xs text-slate-600 dark:text-slate-400">62 units each (72.5% of total order volume)</p>
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Highest Demand</span>
+        <p id="kpiHighColor" class="mt-3 text-2xl sm:text-3xl font-extrabold"></p>
+        <p id="kpiHighSub" class="mt-2 text-xs text-slate-600 dark:text-slate-400"></p>
       </div>
 
-      <!-- KPI 4: Zero-Demand / Inactive Colors -->
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Lowest / Zero Orders</span>
-          <span class="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4" />
-            </svg>
-          </span>
-        </div>
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <span class="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Lowest / Zero Orders</span>
         <div class="mt-3 flex items-baseline gap-2">
-          <p id="kpiZeroCount" class="text-3xl font-extrabold text-slate-900 dark:text-white">5 Colors</p>
-          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">at 0 units</span>
+          <p id="kpiZeroCount" class="text-3xl font-extrabold">0</p>
+          <span class="text-xs text-slate-500 dark:text-slate-400">at 0 units</span>
         </div>
-        <p id="kpiZeroList" class="mt-2 text-xs text-slate-600 dark:text-slate-400 truncate">Pink, Gray, Blue, Brown, Purple</p>
+        <p id="kpiZeroList" class="mt-2 text-xs text-slate-600 dark:text-slate-400"></p>
       </div>
     </section>
 
-    <!-- Section 2: Analytics & Charts Grid -->
-    <section aria-label="Visual Charts" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- Chart 1: Orders vs Stock vs Balance Deficit by Color (7 cols) -->
+    <!-- Charts -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <div class="lg:col-span-7 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-          <div>
-            <h2 class="text-base font-bold text-slate-900 dark:text-white">Demand vs. Stock & Balance Deficit by Color</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Identifies high-volume colors vs. negative stock shortfalls</p>
-          </div>
-          <span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">All 9 SKUs</span>
-        </div>
-        <div class="relative flex-1 min-h-[280px] w-full">
-          <canvas id="colorBalanceChart"></canvas>
-        </div>
+        <h2 class="text-base font-bold">Demand vs. Stock & Balance by Color</h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">High-volume colors vs. negative stock shortfalls</p>
+        <div class="relative flex-1 min-h-[280px] w-full"><canvas id="colorBalanceChart"></canvas></div>
       </div>
 
-      <!-- Chart 2: Route & Channel Demand Share (5 cols) -->
       <div class="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <h2 class="text-base font-bold text-slate-900 dark:text-white">Route & Channel Demand Share</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Distribution volume split across delivery routes</p>
-          </div>
-        </div>
-        <div class="relative flex-1 min-h-[240px] w-full flex items-center justify-center">
-          <canvas id="routeShareChart"></canvas>
-        </div>
-        <div id="routeLegendSummary" class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 text-xs">
-          <!-- Populated dynamically -->
-        </div>
+        <h2 class="text-base font-bold">Route & Channel Demand Share</h2>
+        <p id="routeSourceNote" class="text-xs text-slate-500 dark:text-slate-400 mb-4">Distribution volume across delivery routes</p>
+        <div class="relative flex-1 min-h-[240px] w-full"><canvas id="routeShareChart"></canvas></div>
+        <div id="routeLegendSummary" class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 text-xs"></div>
       </div>
 
-      <!-- Chart 3: Size Curve Breakdown across Active Colors (12 cols) -->
       <div class="lg:col-span-12 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div>
-            <h2 class="text-base font-bold text-slate-900 dark:text-white">Size Distribution Curve (Sizes 4 – 8 & Extended Sizes)</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Batch sizing breakdown to guide factory mold & production run allocation</p>
+            <h2 class="text-base font-bold">Size Distribution Curve</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Size breakdown per color to guide production allocation</p>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300">
-              Peak Sizes: Size 7 & Size 8 (38 units each)
-            </span>
-          </div>
+          <span id="peakSizes" class="text-xs font-medium px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300"></span>
         </div>
-        <div class="relative h-[260px] w-full">
-          <canvas id="sizeCurveChart"></canvas>
-        </div>
+        <div class="relative h-[260px] w-full"><canvas id="sizeCurveChart"></canvas></div>
       </div>
     </section>
 
-    <!-- Section 3: Low Stock Alerts & Board Meeting Decisions Workspace -->
+    <!-- Low stock + decisions -->
     <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- Left: Low Stock & Production Priority Matrix (6 cols) -->
-      <div class="lg:col-span-6 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-              <h2 class="text-base font-bold text-slate-900 dark:text-white">Critical Low Stock & Shortfall Priorities</h2>
-            </div>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Items with negative balance requiring immediate production approval</p>
-          </div>
+      <div class="lg:col-span-6 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+          <h2 class="text-base font-bold">Critical Low Stock & Shortfall Priorities</h2>
         </div>
-
-        <div class="overflow-x-auto flex-1">
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 mb-4">Negative balance items needing production approval</p>
+        <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse text-sm">
             <thead>
               <tr class="border-b border-slate-200 dark:border-slate-800 text-xs uppercase text-slate-500 dark:text-slate-400">
-                <th class="py-2.5 px-3">Color SKU</th>
-                <th class="py-2.5 px-3 text-right">Orders</th>
-                <th class="py-2.5 px-3 text-right">Stock</th>
-                <th class="py-2.5 px-3 text-right">Balance</th>
-                <th class="py-2.5 px-3">Recommended Action</th>
+                <th class="py-2.5 px-3">Color</th><th class="py-2.5 px-3 text-right">Orders</th><th class="py-2.5 px-3 text-right">Stock</th><th class="py-2.5 px-3 text-right">Balance</th><th class="py-2.5 px-3">Action</th>
               </tr>
             </thead>
-            <tbody id="lowStockPriorityBody" class="divide-y divide-slate-100 dark:divide-slate-800">
-              <!-- Populated dynamically -->
-            </tbody>
+            <tbody id="lowStockPriorityBody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- Right: Interactive Board Meeting Decision Log (6 cols) -->
       <div class="lg:col-span-6 bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div>
-            <h2 class="text-base font-bold text-slate-900 dark:text-white">Board Meeting Decisions & Resolutions</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Record, vote on, and export executive resolutions during the session</p>
+            <h2 class="text-base font-bold">Board Meeting Decisions</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Saved in this browser only</p>
           </div>
-          <button onclick="exportDecisionsCSV()" class="no-print inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Export Minutes (.CSV)
-          </button>
+          <button onclick="exportDecisionsCSV()" class="no-print px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition">Export Minutes (.CSV)</button>
         </div>
-
-        <!-- Add Decision Form -->
         <form onsubmit="addBoardDecision(event)" class="no-print grid grid-cols-1 sm:grid-cols-12 gap-2 mb-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-          <input id="decisionTitleInput" type="text" required placeholder="Enter motion / decision (e.g., Approve 171-unit urgent batch)..." class="sm:col-span-6 px-3 py-2 rounded-lg text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          <input id="decisionOwnerInput" type="text" placeholder="Owner (e.g., Ops Head)" class="sm:col-span-3 px-3 py-2 rounded-lg text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          <button type="submit" class="sm:col-span-3 px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition">
-            + Add Motion
-          </button>
+          <input id="decisionTitleInput" type="text" required placeholder="Motion / decision..." class="sm:col-span-6 px-3 py-2 rounded-lg text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input id="decisionOwnerInput" type="text" placeholder="Owner" class="sm:col-span-3 px-3 py-2 rounded-lg text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <button type="submit" class="sm:col-span-3 px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition">+ Add</button>
         </form>
-
-        <!-- Decisions List -->
-        <div id="decisionsList" class="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
-          <!-- Populated dynamically -->
-        </div>
+        <div id="decisionsList" class="space-y-2.5 max-h-[300px] overflow-y-auto pr-1"></div>
       </div>
     </section>
 
-    <!-- Section 4: Comprehensive SKU & Route Drill-Down Table -->
+    <!-- Detailed table -->
     <section class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
       <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
         <div>
-          <h2 class="text-base font-bold text-slate-900 dark:text-white">Detailed Inventory, Size & Route Matrix</h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Complete breakdown synced from Google Sheet tab <span class="font-mono font-semibold" id="tableTabLabel">1780</span></p>
+          <h2 class="text-base font-bold">Detailed Inventory, Size & Route Matrix</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Synced from tab <span class="font-mono font-semibold" id="tableTabLabel">1780</span></p>
         </div>
-
-        <!-- Filters -->
         <div class="flex flex-wrap items-center gap-2 no-print">
-          <select id="viewModeFilter" onchange="renderDetailedTable()" class="px-3 py-2 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="summary">View: Color Summary & Sizes</option>
-            <option value="routes">View: Route & Shop Breakdown</option>
+          <select id="viewModeFilter" onchange="renderDetailedTable()" class="px-3 py-2 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <option value="summary">View: Color & Sizes</option>
+            <option value="routes">View: Route & Shops</option>
           </select>
-
-          <select id="statusFilter" onchange="renderDetailedTable()" class="px-3 py-2 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="ALL">Status: All Items</option>
+          <select id="statusFilter" onchange="renderDetailedTable()" class="px-3 py-2 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <option value="ALL">Status: All</option>
             <option value="LOW">Critical Low (Balance &lt; 0)</option>
-            <option value="ZERO">Zero Demand (Orders = 0)</option>
+            <option value="ZERO">Zero Demand</option>
           </select>
-
-          <input id="searchInput" type="text" oninput="renderDetailedTable()" placeholder="Search color or shop..." class="px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input id="searchInput" type="text" oninput="renderDetailedTable()" placeholder="Search color or shop..." class="px-3 py-2 rounded-xl text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" />
         </div>
       </div>
-
       <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-        <table id="detailedMatrixTable" class="w-full text-left border-collapse text-xs sm:text-sm">
-          <thead id="detailedTableHead" class="bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 uppercase text-[11px] font-bold">
-            <!-- Dynamic Header -->
-          </thead>
-          <tbody id="detailedTableBody" class="divide-y divide-slate-200 dark:divide-slate-800">
-            <!-- Dynamic Rows -->
-          </tbody>
+        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+          <thead id="detailedTableHead" class="bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 uppercase text-[11px] font-bold"></thead>
+          <tbody id="detailedTableBody" class="divide-y divide-slate-200 dark:divide-slate-800"></tbody>
         </table>
       </div>
     </section>
-
   </main>
 
-  <!-- Footer -->
   <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-8">
-    <p>Executive Board Portal • Powered by Google Sheets Live Visualization API & GitHub Pages Static Hosting</p>
+    Executive Board Portal • Live Google Sheets data • Hosted on GitHub Pages
   </footer>
 
-  <!-- Modal: Google Sheet Database & GitHub Pages Hosting Guide -->
+  <!-- Settings modal -->
   <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 no-print">
     <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
       <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Google Sheet Database & GitHub Pages Setup</h3>
-        <button onclick="toggleModal('settingsModal')" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+        <h3 class="text-lg font-bold">Google Sheet Setup</h3>
+        <button onclick="toggleModal('settingsModal')" class="px-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl">✕</button>
       </div>
-
-      <div class="p-6 space-y-5 max-h-[80vh] overflow-y-auto text-sm">
-        <!-- Live Sheet Configuration -->
-        <div class="space-y-3">
-          <h4 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span class="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 text-xs flex items-center justify-center font-bold">1</span>
-            Google Sheet Connection Settings
-          </h4>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div class="sm:col-span-2">
-              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Google Spreadsheet ID</label>
-              <input id="inputSheetId" type="text" value="13-zOFdS_F3jh_sXnLoScL3scBxfwEmLj4Bhlj13GpWg" class="w-full px-3 py-2 rounded-xl text-xs font-mono bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700" />
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Sheet / Tab Name</label>
-              <input id="inputTabName" type="text" value="1780" class="w-full px-3 py-2 rounded-xl text-xs font-mono bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700" />
-            </div>
-          </div>
-          <div class="flex flex-wrap items-center gap-2 pt-1">
-            <button onclick="saveAndSyncSettings()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition">
-              Save & Fetch Live Data
-            </button>
-            <button onclick="loadSnapshotData(true)" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition">
-              Use Built-in Sheet Snapshot
-            </button>
-          </div>
-          <p class="text-xs text-slate-500 dark:text-slate-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 p-3 rounded-xl">
-            <strong>Important for Live Sync:</strong> In Google Sheets, click <strong>Share → General access → Anyone with the link (Viewer)</strong> or <strong>File → Share → Publish to web</strong> so GitHub Pages can read the live database directly without a backend server.
-          </p>
+      <div class="p-6 space-y-4 max-h-[80vh] overflow-y-auto text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Google Sheet URL (paste the full link)</label>
+          <input id="inputSheetUrl" type="text" class="w-full px-3 py-2 rounded-xl text-xs font-mono bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700" />
         </div>
-
-        <!-- GitHub Pages Hosting Steps -->
-        <div class="space-y-2 pt-3 border-t border-slate-200 dark:border-slate-800">
-          <h4 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 text-xs flex items-center justify-center font-bold">2</span>
-            How to Host Free on GitHub Pages (2 Minutes)
-          </h4>
-          <ol class="list-decimal list-inside space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
-            <li>Create a new repository on <a href="https://github.com/new" target="_blank" rel="noopener" class="text-indigo-600 dark:text-indigo-400 underline font-semibold">github.com/new</a> (e.g., <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">board-dashboard</code>).</li>
-            <li>Upload this single file renamed as <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">index.html</code> into the repository root.</li>
-            <li>Go to <strong>Repository Settings → Pages</strong>, under <strong>Source</strong> choose <strong>Deploy from a branch</strong>, select <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">main</code> / <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">/ (root)</code>, and click <strong>Save</strong>.</li>
-            <li>Your live Board Meeting URL (<code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">https://&lt;username&gt;.github.io/board-dashboard/</code>) will automatically pull fresh numbers every time you update your Google Sheet!</li>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Tab name (exact; leave blank to use the gid in the URL)</label>
+            <input id="inputTabName" type="text" class="w-full px-3 py-2 rounded-xl text-xs font-mono bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700" />
+          </div>
+          <label class="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400 mt-5">
+            <input id="inputAutoRefresh" type="checkbox" class="w-4 h-4" /> Auto-refresh every 60 seconds
+          </label>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="saveAndSyncSettings()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition">Save & Fetch Live Data</button>
+          <button onclick="loadSnapshotData(true); toggleModal('settingsModal')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition">Use Built-in Snapshot</button>
+          <button onclick="resetSettings()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition">Reset to Default Sheet</button>
+        </div>
+        <p class="text-xs bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 p-3 rounded-xl text-slate-700 dark:text-slate-300">
+          <strong>Required:</strong> in Google Sheets click <strong>Share → General access → Anyone with the link → Viewer</strong>. Without this the page cannot read the live data.
+        </p>
+        <div class="pt-3 border-t border-slate-200 dark:border-slate-800">
+          <h4 class="font-bold mb-2">Host on GitHub Pages</h4>
+          <ol class="list-decimal list-inside space-y-1 text-xs text-slate-600 dark:text-slate-300">
+            <li>Create a repository on github.com/new.</li>
+            <li>Upload this file renamed as <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">index.html</code>.</li>
+            <li>Settings → Pages → Deploy from a branch → <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">main</code> / <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">/ (root)</code> → Save.</li>
           </ol>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Application Logic & Google Sheets Parser -->
   <script>
-    // =========================================================================
-    // 1. CONFIGURATION & SNAPSHOT DATABASE (FROM YOUR GOOGLE SHEET TAB "1780")
-    // =========================================================================
+    // =====================================================================
+    // 1. CONFIG
+    // =====================================================================
+    const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/13-zOFdS_F3jh_sXnLoScL3scBxfwEmLj4Bhlj13GpWg/edit?usp=sharing';
+    const DEFAULT_TAB = '1780';
+    const AUTO_REFRESH_SECONDS = 60;
+
     const CONFIG = {
-      sheetId: localStorage.getItem('board_sheet_id') || '13-zOFdS_F3jh_sXnLoScL3scBxfwEmLj4Bhlj13GpWg',
-      tabName: localStorage.getItem('board_tab_name') || '1780',
+      sheetUrl: localStorage.getItem('board_sheet_url') || DEFAULT_SHEET_URL,
+      tabName: localStorage.getItem('board_tab_name') !== null ? localStorage.getItem('board_tab_name') : DEFAULT_TAB,
+      autoRefresh: localStorage.getItem('board_auto_refresh') !== 'off',
     };
 
-    const SIZES = ['4', '5', '6', '7', '8', '1', '2', '3', '9', '10', '11', '12', '13'];
+    function extractSheetInfo(url) {
+      const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      const gidMatch = url.match(/[#&?]gid=(\d+)/);
+      return { id: idMatch ? idMatch[1] : url.trim(), gid: gidMatch ? gidMatch[1] : null };
+    }
 
-    // Exact structured snapshot matching Sample_Excel-v3 -> Sheet "1780"
+    function buildCsvUrl() {
+      const { id, gid } = extractSheetInfo(CONFIG.sheetUrl);
+      const base = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv`;
+      if (CONFIG.tabName) return `${base}&sheet=${encodeURIComponent(CONFIG.tabName)}`;
+      return gid ? `${base}&gid=${gid}` : base;
+    }
+
+    function buildOpenUrl() {
+      const { id, gid } = extractSheetInfo(CONFIG.sheetUrl);
+      return `https://docs.google.com/spreadsheets/d/${id}/edit` + (gid ? `#gid=${gid}` : '');
+    }
+
+    const SIZES = ['4', '5', '6', '7', '8', '1', '2', '3', '9', '10', '11', '12', '13'];
+    const COLOR_HEX = {
+      black: '#1e293b', pink: '#ec4899', beige: '#d6bfa9', gray: '#64748b', grey: '#64748b', tan: '#b45309',
+      blue: '#2563eb', brown: '#78350f', purple: '#7c3aed', white: '#94a3b8', red: '#dc2626', green: '#16a34a',
+      navy: '#1e3a8a', maroon: '#7f1d1d', yellow: '#eab308', orange: '#ea580c', cream: '#e7dcc3', olive: '#65752a',
+    };
+
+    // Built-in snapshot of tab "1780" (used only if the live sheet cannot be read)
     const SNAPSHOT_DATA = {
-      source: 'Snapshot (Sheet 1780)',
+      source: 'snapshot',
+      routesSource: 'snapshot',
       colors: [
-        {
-          name: 'Black',
-          hex: '#1e293b',
-          production: 0,
-          orders: 62,
-          stock: 0,
-          balance: -62,
-          sizes: { '4': 10, '5': 11, '6': 13, '7': 14, '8': 14, '1': 0, '2': 0, '3': 0, '9': 0, '10': 0, '11': 0, '12': 0, '13': 0 },
-        },
-        {
-          name: 'Pink',
-          hex: '#ec4899',
-          production: 0,
-          orders: 0,
-          stock: 0,
-          balance: 0,
-          sizes: { '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '1': 0, '2': 0, '3': 0, '9': 0, '10': 0, '11': 0, '12': 0, '13': 0 },
-        },
-        {
-          name: 'Beige',
-          hex: '#d6bfa9',
-          production: 0,
-          orders: 62,
-          stock: 0,
-          balance: -62,
-          sizes: { '4': 10, '5': 11, '6': 13, '7': 14, '8': 14, '1': 0, '2': 0, '3': 0, '9': 0, '10': 0, '11': 0, '12': 0, '13': 0 },
-        },
-        {
-          name: 'Gray',
-          hex: '#64748b',
-          production: 0,
-          orders: 0,
-          stock: 0,
-          balance: 0,
-          sizes: { '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '1': 0, '2': 0, '3': 0, '9': 0, '10': 0, '11': 0, '12': 0, '13': 0 },
-        },
-        {
-          name: 'Tan',
-          hex: '#b45309',
-          production: 0,
-          orders: 37,
-          stock: 0,
-          balance: -37,
-          sizes: { '4': 6, '5': 7, '6': 8, '7': 8, '8': 8, '1': 0, '2': 0, '3': 0, '9': 0, '10': 0, '11': 0, '12': 0, '13': 0 },
-        },
-        {
-          name: 'Blue',
-          hex: '#2563eb',
-          production: 0,
-          orders: 0,
-          stock: 0,
-          balance: 0,
-          sizes: { '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '1': 0, '2': 0, '3': 0, '9': 0, '10': 0, '11': 0, '12': 0, '13': 0 },
-        },
-        {
-          name: 'Brown',
-          hex: '#78350f',
-          production: 0,
-          orders: 0,
-          stock: 0,
-          balance: 0,
-          sizes: { '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '1': 0, '2': 0, '3': 0, '9': 0, '10': 0, '11': 0, '12': 0, '13': 0 },
-        },
-        {
-          name: 'Purple',
-          hex: '#7c3aed',
-          production: 0,
-          orders: 0,
-          stock: 0,
-          balance: 0,
-          sizes: { '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '1': 0, '2': 0, '3': 0, '9': 0, '10': 0, '11': 0, '12': 0, '13': 0 },
-        },
-        {
-          name: 'White',
-          hex: '#94a3b8',
-          production: 0,
-          orders: 10,
-          stock: 0,
-          balance: -10,
-          sizes: { '4': 2, '5': 2, '6': 2, '7': 2, '8': 2, '1': 0, '2': 0, '3': 0, '9': 0, '10': 0, '11': 0, '12': 0, '13': 0 },
-        },
+        { name: 'Black',  hex: '#1e293b', production: 0, orders: 62, stock: 0, balance: -62, sizes: { '4': 10, '5': 11, '6': 13, '7': 14, '8': 14 } },
+        { name: 'Pink',   hex: '#ec4899', production: 0, orders: 0,  stock: 0, balance: 0,   sizes: {} },
+        { name: 'Beige',  hex: '#d6bfa9', production: 0, orders: 62, stock: 0, balance: -62, sizes: { '4': 10, '5': 11, '6': 13, '7': 14, '8': 14 } },
+        { name: 'Gray',   hex: '#64748b', production: 0, orders: 0,  stock: 0, balance: 0,   sizes: {} },
+        { name: 'Tan',    hex: '#b45309', production: 0, orders: 37, stock: 0, balance: -37, sizes: { '4': 6, '5': 7, '6': 8, '7': 8, '8': 8 } },
+        { name: 'Blue',   hex: '#2563eb', production: 0, orders: 0,  stock: 0, balance: 0,   sizes: {} },
+        { name: 'Brown',  hex: '#78350f', production: 0, orders: 0,  stock: 0, balance: 0,   sizes: {} },
+        { name: 'Purple', hex: '#7c3aed', production: 0, orders: 0,  stock: 0, balance: 0,   sizes: {} },
+        { name: 'White',  hex: '#94a3b8', production: 0, orders: 10, stock: 0, balance: -10, sizes: { '4': 2, '5': 2, '6': 2, '7': 2, '8': 2 } },
       ],
       routes: [
-        { route: '01NI (North / Island Route 1)', shop: '1.Qu... (Primary Account)', Black: 10, Beige: 10, Tan: 0, White: 10, total: 30 },
-        { route: '2. C... (Central / Route 2)', shop: '1.Th...', Black: 10, Beige: 10, Tan: 5, White: 0, total: 25 },
-        { route: '2. C... (Central / Route 2)', shop: '2. M...', Black: 10, Beige: 10, Tan: 5, White: 0, total: 25 },
-        { route: '2. C... (Central / Route 2)', shop: '5.gr...', Black: 10, Beige: 10, Tan: 10, White: 0, total: 30 },
-        { route: '2. C... (Central / Route 2)', shop: '6.wa...', Black: 10, Beige: 10, Tan: 10, White: 0, total: 30 },
-        { route: '2. C... (Central / Route 2)', shop: '7.ho...', Black: 6, Beige: 6, Tan: 4, White: 0, total: 16 },
-        { route: '2. C... (Central / Route 2)', shop: '9.Sh...', Black: 6, Beige: 6, Tan: 3, White: 0, total: 15 },
+        { route: '01NI (North / Island Route 1)', shop: '1.Qu... (Primary Account)', Black: 10, Beige: 10, Tan: 0,  White: 10, total: 30 },
+        { route: '2. C... (Central / Route 2)',   shop: '1.Th...', Black: 10, Beige: 10, Tan: 5,  White: 0, total: 25 },
+        { route: '2. C... (Central / Route 2)',   shop: '2. M...', Black: 10, Beige: 10, Tan: 5,  White: 0, total: 25 },
+        { route: '2. C... (Central / Route 2)',   shop: '5.gr...', Black: 10, Beige: 10, Tan: 10, White: 0, total: 30 },
+        { route: '2. C... (Central / Route 2)',   shop: '6.wa...', Black: 10, Beige: 10, Tan: 10, White: 0, total: 30 },
+        { route: '2. C... (Central / Route 2)',   shop: '7.ho...', Black: 6,  Beige: 6,  Tan: 4,  White: 0, total: 16 },
+        { route: '2. C... (Central / Route 2)',   shop: '9.Sh...', Black: 6,  Beige: 6,  Tan: 3,  White: 0, total: 15 },
       ],
     };
 
     let currentData = JSON.parse(JSON.stringify(SNAPSHOT_DATA));
     let charts = {};
+    let refreshTimer = null;
 
-    // Default Board Meeting Decisions (persisted in localStorage)
     let boardDecisions = JSON.parse(localStorage.getItem('board_decisions_v1')) || [
-      {
-        id: 1,
-        title: 'Approve Emergency Production Batch of 171 Units (62 Black, 62 Beige, 37 Tan, 10 White)',
-        owner: 'Head of Production',
-        status: 'Approved',
-        timestamp: 'Board Session #1780',
-      },
-      {
-        id: 2,
-        title: 'Prioritize Molds for Peak Sizes 6, 7, and 8 (Account for 66% of active orders)',
-        owner: 'Factory Floor Lead',
-        status: 'Pending Vote',
-        timestamp: 'Board Session #1780',
-      },
-      {
-        id: 3,
-        title: 'Hold Raw Material Procurement for Zero-Demand Colors (Pink, Gray, Blue, Brown, Purple)',
-        owner: 'Procurement Manager',
-        status: 'Approved',
-        timestamp: 'Board Session #1780',
-      },
+      { id: 1, title: 'Approve emergency production batch of 171 units (62 Black, 62 Beige, 37 Tan, 10 White)', owner: 'Head of Production', status: 'Approved', timestamp: 'Board Session #1780' },
+      { id: 2, title: 'Prioritize molds for peak sizes 6, 7 and 8', owner: 'Factory Floor Lead', status: 'Pending Vote', timestamp: 'Board Session #1780' },
+      { id: 3, title: 'Hold raw material procurement for zero-demand colors', owner: 'Procurement Manager', status: 'Approved', timestamp: 'Board Session #1780' },
     ];
 
-    // =========================================================================
-    // 2. GOOGLE SHEETS LIVE CONNECTOR & DYNAMIC CSV PARSER
-    // =========================================================================
+    // =====================================================================
+    // 2. LIVE GOOGLE SHEET CONNECTION
+    // =====================================================================
+    function setBadge(kind, text) {
+      const badge = document.getElementById('connectionBadge');
+      const styles = {
+        live: ['bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300', 'bg-emerald-500'],
+        warn: ['bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300', 'bg-amber-500'],
+      }[kind];
+      badge.className = `inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${styles[0]}`;
+      badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${styles[1]}"></span> ${text}`;
+    }
+
     async function syncGoogleSheet() {
       const syncIcon = document.getElementById('syncIcon');
-      const badge = document.getElementById('connectionBadge');
       syncIcon.classList.add('animate-spin');
-
-      document.getElementById('headerSheetId').textContent = CONFIG.sheetId.slice(0, 6) + '...' + CONFIG.sheetId.slice(-4);
-      document.getElementById('headerTabName').textContent = CONFIG.tabName;
-      document.getElementById('tableTabLabel').textContent = CONFIG.tabName;
-
-const url = `https://docs.google.com/spreadsheets/d/13-zOFdS_F3jh_sXnLoScL3scBxfwEmLj4Bhlj13GpWg/export?format=csv&gid=YOUR_TAB_GID`;
+      document.getElementById('headerTabName').textContent = CONFIG.tabName || 'from URL (gid)';
+      document.getElementById('tableTabLabel').textContent = CONFIG.tabName || 'from URL (gid)';
+      document.getElementById('openSheetLink').href = buildOpenUrl();
 
       try {
-        const response = await fetch(gvizCsvUrl, { cache: 'no-store' });
+        const response = await fetch(buildCsvUrl(), { cache: 'no-store' });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
         const csvText = await response.text();
-        // Check if Google returned an HTML login page instead of CSV (happens when sheet is private)
-        if (csvText.trim().startsWith('<!DOCTYPE html') || csvText.includes('ServiceLogin')) {
-          throw new Error('Sheet is currently private (requires "Anyone with link can view")');
+        if (/^\s*<(!doctype|html)/i.test(csvText) || csvText.includes('ServiceLogin')) {
+          throw new Error('Google returned a login page. Set sharing to "Anyone with the link → Viewer".');
         }
-
         const parsed = parseGoogleSheetMatrixCSV(csvText);
-        if (parsed && parsed.colors.length > 0) {
-          currentData = parsed;
-          badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300';
-          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Live Google Sheet Connected`;
-          showBanner('success', `Successfully synced live data from Google Sheet tab "${CONFIG.tabName}" at ${new Date().toLocaleTimeString()}.`);
-        } else {
-          throw new Error('Parsed structure empty; falling back to snapshot');
-        }
+        currentData = parsed;
+        setBadge('live', 'Live Google Sheet Connected');
+        document.getElementById('lastSync').textContent = new Date().toLocaleTimeString();
+        showBanner('success', `Live data loaded from tab "${CONFIG.tabName || 'gid'}" at ${new Date().toLocaleTimeString()}.`);
       } catch (err) {
-        console.warn('Google Sheet Live Fetch Info:', err.message);
+        console.warn('Live fetch failed:', err);
+        const isNetwork = err instanceof TypeError;
         loadSnapshotData(false);
-        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300';
-        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Snapshot Mode (Sheet Private)`;
-        showBanner('warning', `Using verified Sheet "1780" snapshot. To enable 1-click live sync on GitHub Pages, set your Google Sheet sharing to "Anyone with the link → Viewer".`);
+        setBadge('warn', 'Snapshot Mode');
+        showBanner('warning',
+          isNetwork
+            ? 'Could not reach the sheet (it may be private, the tab name may be wrong, or you are offline). Showing the built-in snapshot.'
+            : `Live sync failed: ${err.message} Showing the built-in snapshot.`);
       } finally {
         syncIcon.classList.remove('animate-spin');
         refreshAllUI();
@@ -597,125 +369,76 @@ const url = `https://docs.google.com/spreadsheets/d/13-zOFdS_F3jh_sXnLoScL3scBxf
       currentData = JSON.parse(JSON.stringify(SNAPSHOT_DATA));
       refreshAllUI();
       if (notify) {
-        showBanner('success', 'Loaded built-in Sheet "1780" snapshot dataset.');
+        setBadge('warn', 'Snapshot Mode');
+        showBanner('success', 'Loaded the built-in snapshot of tab "1780".');
       }
     }
 
-    // Robust CSV parser tailored for multi-color matrix sheets like Sample_Excel-v3
-    function parseGoogleSheetMatrixCSV(csvText) {
-      const rows = [];
-      let row = [];
-      let field = '';
-      let inQuotes = false;
-
+    // ---- CSV parsing --------------------------------------------------------
+    function parseCSVRows(csvText) {
+      const rows = []; let row = [], field = '', inQuotes = false;
       for (let i = 0; i < csvText.length; i++) {
-        const c = csvText[i];
-        const next = csvText[i + 1];
+        const c = csvText[i], next = csvText[i + 1];
         if (inQuotes) {
-          if (c === '"' && next === '"') {
-            field += '"';
-            i++;
-          } else if (c === '"') {
-            inQuotes = false;
-          } else {
-            field += c;
-          }
-        } else {
-          if (c === '"') {
-            inQuotes = true;
-          } else if (c === ',') {
-            row.push(field.trim());
-            field = '';
-          } else if (c === '\n' || (c === '\r' && next === '\n')) {
-            row.push(field.trim());
-            rows.push(row);
-            row = [];
-            field = '';
-            if (c === '\r') i++;
-          } else {
-            field += c;
-          }
-        }
+          if (c === '"' && next === '"') { field += '"'; i++; }
+          else if (c === '"') inQuotes = false;
+          else field += c;
+        } else if (c === '"') inQuotes = true;
+        else if (c === ',') { row.push(field.trim()); field = ''; }
+        else if (c === '\n' || c === '\r') {
+          if (c === '\r' && next === '\n') i++;
+          row.push(field.trim()); rows.push(row); row = []; field = '';
+        } else field += c;
       }
-      if (field.length > 0 || row.length > 0) {
-        row.push(field.trim());
-        rows.push(row);
-      }
-
-      // Locate key rows by label ("Production", "Total", "STOCK", "Balance")
-      const findRowByKeyword = (kw) =>
-        rows.find((r) => r.slice(0, 5).some((cell) => cell && cell.toLowerCase() === kw.toLowerCase()));
-
-      const prodRow = findRowByKeyword('Production');
-      const totalRow = findRowByKeyword('Total');
-      const stockRow = findRowByKeyword('STOCK');
-      const balanceRow = findRowByKeyword('Balance');
-
-      if (!totalRow) return null;
-
-      // Locate color header row (contains Black, Pink, Beige, etc.)
-      const colorNames = ['Black', 'Pink', 'Beige', 'Gray', 'Tan', 'Blue', 'Brown', 'Purple', 'White'];
-      const hexMap = {
-        Black: '#1e293b',
-        Pink: '#ec4899',
-        Beige: '#d6bfa9',
-        Gray: '#64748b',
-        Tan: '#b45309',
-        Blue: '#2563eb',
-        Brown: '#78350f',
-        Purple: '#7c3aed',
-        White: '#94a3b8',
-      };
-
-      const colorHeaderRow = rows.find((r) => r.filter((c) => colorNames.includes(c)).length >= 3);
-      const sizeHeaderRow = rows.find((r) => r.filter((c) => c === '4' || c === '5' || c === '6').length >= 3);
-
-      if (!colorHeaderRow || !sizeHeaderRow) return null;
-
-      const parsedColors = [];
-      for (let cIdx = 0; cIdx < colorHeaderRow.length; cIdx++) {
-        const colLabel = colorHeaderRow[cIdx];
-        if (colorNames.includes(colLabel)) {
-          // Each color spans ~14 columns (sizes 4..13 + Total)
-          const sizeBreakdown = {};
-          let totalColIdx = cIdx + 13;
-          for (let offset = 0; offset < 15 && cIdx + offset < sizeHeaderRow.length; offset++) {
-            const sLabel = sizeHeaderRow[cIdx + offset];
-            if (SIZES.includes(sLabel)) {
-              sizeBreakdown[sLabel] = parseFloat(totalRow[cIdx + offset]) || 0;
-            } else if (sLabel && sLabel.toLowerCase().includes('total')) {
-              totalColIdx = cIdx + offset;
-              break;
-            }
-          }
-
-          const ordersVal = parseFloat(totalRow[totalColIdx]) || Object.values(sizeBreakdown).reduce((a, b) => a + b, 0);
-          const prodVal = prodRow ? parseFloat(prodRow[totalColIdx]) || 0 : 0;
-          const stockVal = stockRow ? parseFloat(stockRow[totalColIdx]) || 0 : 0;
-          const balVal = balanceRow && balanceRow[totalColIdx] !== '' ? parseFloat(balanceRow[totalColIdx]) : stockVal - ordersVal;
-
-          parsedColors.push({
-            name: colLabel,
-            hex: hexMap[colLabel] || '#6366f1',
-            production: prodVal,
-            orders: ordersVal,
-            stock: stockVal,
-            balance: balVal,
-            sizes: sizeBreakdown,
-          });
-        }
-      }
-
-      return {
-        source: `Live Google Sheet (${CONFIG.tabName})`,
-        colors: parsedColors.length > 0 ? parsedColors : SNAPSHOT_DATA.colors,
-        routes: SNAPSHOT_DATA.routes,
-      };
+      if (field.length > 0 || row.length > 0) { row.push(field.trim()); rows.push(row); }
+      return rows;
     }
 
-    // =========================================================================
-    // 3. UI RENDERING: KPIs, CHARTS, LOW STOCK PRIORITY, DECISIONS & TABLES
-    // =========================================================================
+    const toNum = v => { const n = parseFloat(String(v ?? '').replace(/[^0-9.\-]/g, '')); return isNaN(n) ? 0 : n; };
+    const isColorName = s => !!(s && COLOR_HEX[String(s).toLowerCase()]);
+
+    function parseGoogleSheetMatrixCSV(csvText) {
+      const rows = parseCSVRows(csvText);
+      const labelRow = kw => rows.find(r => r.slice(0, 5).some(c => c && c.toLowerCase() === kw.toLowerCase()));
+
+      const prodRow = labelRow('Production');
+      const totalRow = labelRow('Total');
+      const stockRow = labelRow('STOCK');
+      const balanceRow = labelRow('Balance');
+      if (!totalRow) throw new Error('Could not find a row labelled "Total" in this tab.');
+
+      const colorHeaderRow = rows.find(r => r.filter(isColorName).length >= 2);
+      const sizeHeaderRow = rows.find(r => r.filter(c => c === '4' || c === '5' || c === '6').length >= 3);
+      if (!colorHeaderRow || !sizeHeaderRow) throw new Error('Could not find the color / size header rows in this tab.');
+
+      const starts = [];
+      colorHeaderRow.forEach((c, i) => { if (isColorName(c)) starts.push(i); });
+
+      const colors = starts.map((start, k) => {
+        const end = k + 1 < starts.length ? starts[k + 1] : sizeHeaderRow.length;
+        const name = colorHeaderRow[start];
+        const sizes = {};
+        let totalIdx = -1;
+        for (let idx = start; idx < end; idx++) {
+          const label = sizeHeaderRow[idx];
+          if (SIZES.includes(label)) sizes[label] = toNum(totalRow[idx]);
+          else if (label && /total/i.test(label)) { totalIdx = idx; break; }
+        }
+        const sumSizes = Object.values(sizes).reduce((a, b) => a + b, 0);
+        const orders = totalIdx >= 0 ? toNum(totalRow[totalIdx]) : sumSizes;
+        const production = totalIdx >= 0 && prodRow ? toNum(prodRow[totalIdx]) : 0;
+        const stock = totalIdx >= 0 && stockRow ? toNum(stockRow[totalIdx]) : 0;
+        const balance = totalIdx >= 0 && balanceRow && balanceRow[totalIdx] !== '' ? toNum(balanceRow[totalIdx]) : stock - orders;
+        return { name, hex: COLOR_HEX[name.toLowerCase()], production, orders, stock, balance, sizes };
+      });
+
+      if (!colors.length) throw new Error('No color blocks were found in this tab.');
+      return { source: 'live', routesSource: 'snapshot', colors, routes: SNAPSHOT_DATA.routes };
+    }
+
+    // =====================================================================
+    // 3. UI RENDERING
+    // =====================================================================
     function refreshAllUI() {
       updateKPICards();
       renderCharts();
@@ -726,438 +449,248 @@ const url = `https://docs.google.com/spreadsheets/d/13-zOFdS_F3jh_sXnLoScL3scBxf
 
     function updateKPICards() {
       const colors = currentData.colors;
-      const totalOrders = colors.reduce((acc, c) => acc + c.orders, 0);
-      const totalStock = colors.reduce((acc, c) => acc + c.stock, 0);
-      const totalProd = colors.reduce((acc, c) => acc + c.production, 0);
-      const netBalance = colors.reduce((acc, c) => acc + c.balance, 0);
-
-      // Highest demand colors
-      const maxOrder = Math.max(...colors.map((c) => c.orders));
-      const topColors = colors.filter((c) => c.orders === maxOrder && maxOrder > 0);
-      const topShare = totalOrders > 0 ? (((maxOrder * topColors.length) / totalOrders) * 100).toFixed(1) : 0;
-
-      // Zero demand colors
-      const zeroColors = colors.filter((c) => c.orders === 0);
+      const totalOrders = colors.reduce((a, c) => a + c.orders, 0);
+      const totalStock = colors.reduce((a, c) => a + c.stock, 0);
+      const totalProd = colors.reduce((a, c) => a + c.production, 0);
+      const netBalance = colors.reduce((a, c) => a + c.balance, 0);
+      const maxOrder = Math.max(0, ...colors.map(c => c.orders));
+      const topColors = colors.filter(c => c.orders === maxOrder && maxOrder > 0);
+      const topShare = totalOrders > 0 ? ((maxOrder * topColors.length / totalOrders) * 100).toFixed(1) : 0;
+      const zeroColors = colors.filter(c => c.orders === 0);
+      const shops = currentData.routes.length;
+      const routeCount = new Set(currentData.routes.map(r => r.route)).size;
 
       document.getElementById('kpiTotalOrders').textContent = totalOrders.toLocaleString();
+      document.getElementById('kpiActiveRoutes').textContent = `Across ${routeCount} routes (${shops} shops)`;
       document.getElementById('kpiNetBalance').textContent = (netBalance > 0 ? '+' : '') + netBalance.toLocaleString();
+      const tag = document.getElementById('kpiNetTag');
+      tag.textContent = netBalance < 0 ? 'CRITICAL DEFICIT' : 'BALANCED';
+      tag.className = 'px-2 py-0.5 rounded-full text-[11px] font-bold ' + (netBalance < 0
+        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300'
+        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300');
       document.getElementById('kpiStockProd').textContent = `Stock: ${totalStock} units • Production logged: ${totalProd} units`;
-
-      document.getElementById('kpiHighColor').textContent = topColors.length > 0 ? topColors.map((c) => c.name).join(' & ') : 'None';
-      document.getElementById('kpiHighSub').textContent =
-        topColors.length > 0 ? `${maxOrder} units each (${topShare}% of total demand)` : 'No active orders recorded';
-
+      document.getElementById('kpiHighColor').textContent = topColors.length ? topColors.map(c => c.name).join(' & ') : 'None';
+      document.getElementById('kpiHighSub').textContent = topColors.length ? `${maxOrder} units each (${topShare}% of total demand)` : 'No active orders';
       document.getElementById('kpiZeroCount').textContent = `${zeroColors.length} Colors`;
-      document.getElementById('kpiZeroList').textContent = zeroColors.map((c) => c.name).join(', ') || 'All colors active';
+      document.getElementById('kpiZeroList').textContent = zeroColors.map(c => c.name).join(', ') || 'All colors active';
     }
 
     function renderCharts() {
       const isDark = document.documentElement.classList.contains('dark');
       const textColor = isDark ? '#cbd5e1' : '#475569';
-      const gridColor = isDark ? 'rgba(148, 163, 184, 0.12)' : 'rgba(148, 163, 184, 0.2)';
+      const gridColor = isDark ? 'rgba(148,163,184,.12)' : 'rgba(148,163,184,.2)';
+      const labels = currentData.colors.map(c => c.name);
 
-      const labels = currentData.colors.map((c) => c.name);
-      const ordersData = currentData.colors.map((c) => c.orders);
-      const stockData = currentData.colors.map((c) => c.stock);
-      const balanceData = currentData.colors.map((c) => c.balance);
+      Object.values(charts).forEach(ch => ch && ch.destroy());
 
-      // Destroy previous chart instances safely
-      Object.values(charts).forEach((ch) => ch && ch.destroy());
-
-      // 1. Bar Chart: Orders vs Stock vs Balance Deficit
-      const ctx1 = document.getElementById('colorBalanceChart').getContext('2d');
-      charts.colorBalance = new Chart(ctx1, {
+      charts.colorBalance = new Chart(document.getElementById('colorBalanceChart').getContext('2d'), {
         type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: 'Total Orders',
-              data: ordersData,
-              backgroundColor: '#4f46e5',
-              borderRadius: 6,
-            },
-            {
-              label: 'Current Stock',
-              data: stockData,
-              backgroundColor: '#10b981',
-              borderRadius: 6,
-            },
-            {
-              label: 'Net Balance (Shortfall)',
-              data: balanceData,
-              backgroundColor: '#f43f5e',
-              borderRadius: 6,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { labels: { color: textColor, font: { family: 'Inter', weight: '600' } } },
-          },
-          scales: {
-            x: { ticks: { color: textColor }, grid: { display: false } },
-            y: { ticks: { color: textColor }, grid: { color: gridColor } },
-          },
-        },
+        data: { labels, datasets: [
+          { label: 'Total Orders', data: currentData.colors.map(c => c.orders), backgroundColor: '#4f46e5', borderRadius: 6 },
+          { label: 'Current Stock', data: currentData.colors.map(c => c.stock), backgroundColor: '#10b981', borderRadius: 6 },
+          { label: 'Net Balance', data: currentData.colors.map(c => c.balance), backgroundColor: '#f43f5e', borderRadius: 6 },
+        ] },
+        options: { responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: textColor, font: { family: 'Inter', weight: '600' } } } },
+          scales: { x: { ticks: { color: textColor }, grid: { display: false } }, y: { ticks: { color: textColor }, grid: { color: gridColor } } } },
       });
 
-      // 2. Doughnut Chart: Route Share
       const routeTotals = {};
-      currentData.routes.forEach((r) => {
-        routeTotals[r.route] = (routeTotals[r.route] || 0) + r.total;
-      });
-      const routeLabels = Object.keys(routeTotals);
-      const routeValues = Object.values(routeTotals);
-
-      const ctx2 = document.getElementById('routeShareChart').getContext('2d');
-      charts.routeShare = new Chart(ctx2, {
+      currentData.routes.forEach(r => { routeTotals[r.route] = (routeTotals[r.route] || 0) + r.total; });
+      const routeLabels = Object.keys(routeTotals), routeValues = Object.values(routeTotals);
+      charts.routeShare = new Chart(document.getElementById('routeShareChart').getContext('2d'), {
         type: 'doughnut',
-        data: {
-          labels: routeLabels,
-          datasets: [
-            {
-              data: routeValues,
-              backgroundColor: ['#0ea5e9', '#6366f1', '#14b8a6', '#f59e0b'],
-              borderWidth: 0,
-              hoverOffset: 6,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '66%',
-          plugins: {
-            legend: { position: 'bottom', labels: { color: textColor, boxWidth: 12, font: { size: 11 } } },
-          },
-        },
+        data: { labels: routeLabels, datasets: [{ data: routeValues, backgroundColor: ['#0ea5e9', '#6366f1', '#14b8a6', '#f59e0b'], borderWidth: 0, hoverOffset: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '66%',
+          plugins: { legend: { position: 'bottom', labels: { color: textColor, boxWidth: 12, font: { size: 11 } } } } },
       });
 
-      // Update Route Legend Summary Cards
-      const routeLegendEl = document.getElementById('routeLegendSummary');
-      const grandTotalRoutes = routeValues.reduce((a, b) => a + b, 0) || 1;
-      routeLegendEl.innerHTML = routeLabels
-        .map((rl, idx) => {
-          const pct = ((routeValues[idx] / grandTotalRoutes) * 100).toFixed(1);
-          return `
-            <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
-              <div class="font-semibold text-slate-800 dark:text-slate-200 truncate">${rl}</div>
-              <div class="text-indigo-600 dark:text-indigo-400 font-bold mt-0.5">${routeValues[idx]} units (${pct}%)</div>
-            </div>
-          `;
-        })
-        .join('');
+      document.getElementById('routeSourceNote').textContent = currentData.routesSource === 'snapshot' && currentData.source === 'live'
+        ? 'Route / shop figures come from the built-in snapshot (not yet read from the live sheet)'
+        : 'Distribution volume across delivery routes';
 
-      // 3. Grouped Bar Chart: Size Breakdown across Active Colors
-      const activeColors = currentData.colors.filter((c) => c.orders > 0);
+      const grand = routeValues.reduce((a, b) => a + b, 0) || 1;
+      document.getElementById('routeLegendSummary').innerHTML = routeLabels.map((rl, i) => `
+        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+          <div class="font-semibold truncate">${escapeHTML(rl)}</div>
+          <div class="text-indigo-600 dark:text-indigo-400 font-bold mt-0.5">${routeValues[i]} units (${((routeValues[i] / grand) * 100).toFixed(1)}%)</div>
+        </div>`).join('');
+
+      const active = currentData.colors.filter(c => c.orders > 0);
       const displaySizes = ['4', '5', '6', '7', '8', '9', '10'];
-      const ctx3 = document.getElementById('sizeCurveChart').getContext('2d');
-      charts.sizeCurve = new Chart(ctx3, {
+      const sizeTotals = displaySizes.map(s => active.reduce((a, c) => a + (c.sizes[s] || 0), 0));
+      const peak = Math.max(0, ...sizeTotals);
+      const peakNames = displaySizes.filter((s, i) => sizeTotals[i] === peak && peak > 0).map(s => 'Size ' + s);
+      document.getElementById('peakSizes').textContent = peakNames.length ? `Peak: ${peakNames.join(' & ')} (${peak} units each)` : 'No size data';
+
+      charts.sizeCurve = new Chart(document.getElementById('sizeCurveChart').getContext('2d'), {
         type: 'bar',
-        data: {
-          labels: displaySizes.map((s) => `Size ${s}`),
-          datasets: activeColors.map((c) => ({
-            label: c.name,
-            data: displaySizes.map((s) => c.sizes[s] || 0),
-            backgroundColor: c.hex,
-            borderRadius: 5,
-          })),
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { labels: { color: textColor, font: { family: 'Inter', weight: '600' } } },
-          },
-          scales: {
-            x: { ticks: { color: textColor }, grid: { display: false } },
-            y: { beginAtZero: true, ticks: { color: textColor, stepSize: 2 }, grid: { color: gridColor } },
-          },
-        },
+        data: { labels: displaySizes.map(s => `Size ${s}`), datasets: active.map(c => ({
+          label: c.name, data: displaySizes.map(s => c.sizes[s] || 0), backgroundColor: c.hex, borderRadius: 5 })) },
+        options: { responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: textColor, font: { family: 'Inter', weight: '600' } } } },
+          scales: { x: { ticks: { color: textColor }, grid: { display: false } }, y: { beginAtZero: true, ticks: { color: textColor }, grid: { color: gridColor } } } },
       });
     }
 
     function renderLowStockPriorityTable() {
       const tbody = document.getElementById('lowStockPriorityBody');
-      const deficitItems = [...currentData.colors]
-        .filter((c) => c.balance < 0)
-        .sort((a, b) => a.balance - b.balance);
-
-      if (deficitItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-xs text-slate-500">All inventory items are currently balanced.</td></tr>`;
+      const items = currentData.colors.filter(c => c.balance < 0).sort((a, b) => a.balance - b.balance);
+      if (!items.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-xs text-slate-500">All items are currently balanced.</td></tr>`;
         return;
       }
-
-      tbody.innerHTML = deficitItems
-        .map((item) => {
-          const needed = Math.abs(item.balance);
-          const priorityTag =
-            needed >= 50
-              ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">Urgent Batch</span>'
-              : '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">Standard Batch</span>';
-
-          return `
-            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
-              <td class="py-3 px-3 font-semibold flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" style="background:${item.hex}"></span>
-                ${item.name}
-              </td>
-              <td class="py-3 px-3 text-right font-medium">${item.orders}</td>
-              <td class="py-3 px-3 text-right text-slate-500">${item.stock}</td>
-              <td class="py-3 px-3 text-right font-bold text-rose-600 dark:text-rose-400">${item.balance}</td>
-              <td class="py-3 px-3 flex items-center justify-between gap-2">
-                <span class="text-xs font-medium">Produce <strong>+${needed}</strong></span>
-                ${priorityTag}
-              </td>
-            </tr>
-          `;
-        })
-        .join('');
+      tbody.innerHTML = items.map(item => {
+        const needed = Math.abs(item.balance);
+        const tag = needed >= 50
+          ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">Urgent</span>'
+          : '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">Standard</span>';
+        return `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+          <td class="py-3 px-3 font-semibold"><span class="inline-block w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600 mr-2 align-middle" style="background:${item.hex}"></span>${escapeHTML(item.name)}</td>
+          <td class="py-3 px-3 text-right font-medium">${item.orders}</td>
+          <td class="py-3 px-3 text-right text-slate-500">${item.stock}</td>
+          <td class="py-3 px-3 text-right font-bold text-rose-600 dark:text-rose-400">${item.balance}</td>
+          <td class="py-3 px-3"><span class="text-xs font-medium mr-2">Produce <strong>+${needed}</strong></span>${tag}</td>
+        </tr>`;
+      }).join('');
     }
 
-    // =========================================================================
-    // 4. BOARD DECISIONS TRACKER
-    // =========================================================================
+    // =====================================================================
+    // 4. BOARD DECISIONS
+    // =====================================================================
+    function saveDecisions() { localStorage.setItem('board_decisions_v1', JSON.stringify(boardDecisions)); }
+
     function renderDecisionsList() {
-      const container = document.getElementById('decisionsList');
-      if (boardDecisions.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No motions logged yet. Add a decision above.</p>`;
+      const el = document.getElementById('decisionsList');
+      if (!boardDecisions.length) {
+        el.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No motions logged yet.</p>`;
         return;
       }
-
-      container.innerHTML = boardDecisions
-        .map((d) => {
-          const badgeClass =
-            d.status === 'Approved'
-              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
-              : d.status === 'Rejected'
-              ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-300'
-              : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300';
-
-          return `
-            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div class="space-y-1">
-                <p class="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">${escapeHTML(d.title)}</p>
-                <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>Owner: <strong>${escapeHTML(d.owner || 'Board')}</strong></span>
-                  <span>•</span>
-                  <span>${escapeHTML(d.timestamp)}</span>
-                </div>
-              </div>
-              <div class="flex items-center gap-1.5 shrink-0 no-print">
-                <select onchange="updateDecisionStatus(${d.id}, this.value)" class="px-2 py-1 rounded-lg text-xs font-semibold border border-slate-300 dark:border-slate-600 ${badgeClass}">
-                  <option value="Pending Vote" ${d.status === 'Pending Vote' ? 'selected' : ''}>Pending Vote</option>
-                  <option value="Approved" ${d.status === 'Approved' ? 'selected' : ''}>Approved</option>
-                  <option value="Deferred" ${d.status === 'Deferred' ? 'selected' : ''}>Deferred</option>
-                  <option value="Rejected" ${d.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
-                </select>
-                <button onclick="deleteDecision(${d.id})" title="Remove motion" class="p-1.5 text-slate-400 hover:text-rose-500 transition">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          `;
-        })
-        .join('');
+      el.innerHTML = boardDecisions.map(d => {
+        const badge = d.status === 'Approved' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
+          : d.status === 'Rejected' ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-300'
+          : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300';
+        const opt = s => `<option value="${s}" ${d.status === s ? 'selected' : ''}>${s}</option>`;
+        return `<div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <p class="text-xs sm:text-sm font-semibold">${escapeHTML(d.title)}</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">Owner: <strong>${escapeHTML(d.owner || 'Board')}</strong> • ${escapeHTML(d.timestamp)}</p>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0 no-print">
+            <select onchange="updateDecisionStatus(${d.id}, this.value)" class="px-2 py-1 rounded-lg text-xs font-semibold border border-slate-300 dark:border-slate-600 ${badge}">
+              ${opt('Pending Vote')}${opt('Approved')}${opt('Deferred')}${opt('Rejected')}
+            </select>
+            <button onclick="deleteDecision(${d.id})" title="Remove" class="px-2 py-1 text-slate-400 hover:text-rose-500">🗑</button>
+          </div>
+        </div>`;
+      }).join('');
     }
 
     function addBoardDecision(e) {
       e.preventDefault();
-      const titleInput = document.getElementById('decisionTitleInput');
-      const ownerInput = document.getElementById('decisionOwnerInput');
-      if (!titleInput.value.trim()) return;
-
-      boardDecisions.unshift({
-        id: Date.now(),
-        title: titleInput.value.trim(),
-        owner: ownerInput.value.trim() || 'Executive Board',
-        status: 'Approved',
-        timestamp: new Date().toLocaleDateString(),
-      });
-
-      localStorage.setItem('board_decisions_v1', JSON.stringify(boardDecisions));
-      titleInput.value = '';
-      ownerInput.value = '';
-      renderDecisionsList();
+      const t = document.getElementById('decisionTitleInput'), o = document.getElementById('decisionOwnerInput');
+      if (!t.value.trim()) return;
+      boardDecisions.unshift({ id: Date.now(), title: t.value.trim(), owner: o.value.trim() || 'Executive Board', status: 'Pending Vote', timestamp: new Date().toLocaleDateString() });
+      saveDecisions(); t.value = ''; o.value = ''; renderDecisionsList();
     }
-
-    function updateDecisionStatus(id, newStatus) {
-      boardDecisions = boardDecisions.map((d) => (d.id === id ? { ...d, status: newStatus } : d));
-      localStorage.setItem('board_decisions_v1', JSON.stringify(boardDecisions));
-      renderDecisionsList();
-    }
-
-    function deleteDecision(id) {
-      boardDecisions = boardDecisions.filter((d) => d.id !== id);
-      localStorage.setItem('board_decisions_v1', JSON.stringify(boardDecisions));
-      renderDecisionsList();
-    }
+    function updateDecisionStatus(id, s) { boardDecisions = boardDecisions.map(d => d.id === id ? { ...d, status: s } : d); saveDecisions(); renderDecisionsList(); }
+    function deleteDecision(id) { boardDecisions = boardDecisions.filter(d => d.id !== id); saveDecisions(); renderDecisionsList(); }
 
     function exportDecisionsCSV() {
-      const headers = ['ID', 'Resolution / Decision', 'Assigned Owner', 'Board Status', 'Date'];
-      const rows = boardDecisions.map((d) => [
-        d.id,
-        `"${d.title.replace(/"/g, '""')}"`,
-        `"${d.owner.replace(/"/g, '""')}"`,
-        d.status,
-        d.timestamp,
-      ]);
-      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement('a');
-      link.setAttribute('href', encodedUri);
-      link.setAttribute('download', `Board_Meeting_Decisions_Sheet_${CONFIG.tabName}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const lines = [['ID', 'Resolution / Decision', 'Owner', 'Status', 'Date'].join(',')]
+        .concat(boardDecisions.map(d => [d.id, q(d.title), q(d.owner), d.status, q(d.timestamp)].join(',')));
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `Board_Meeting_Decisions_${CONFIG.tabName || 'sheet'}.csv`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     }
 
-    // =========================================================================
-    // 5. DETAILED MATRIX TABLE (COLOR/SIZES & ROUTE/SHOP VIEWS)
-    // =========================================================================
+    // =====================================================================
+    // 5. DETAILED TABLE
+    // =====================================================================
     function renderDetailedTable() {
       const viewMode = document.getElementById('viewModeFilter').value;
       const statusFilter = document.getElementById('statusFilter').value;
       const search = document.getElementById('searchInput').value.toLowerCase().trim();
-
-      const thead = document.getElementById('detailedTableHead');
-      const tbody = document.getElementById('detailedTableBody');
+      const thead = document.getElementById('detailedTableHead'), tbody = document.getElementById('detailedTableBody');
 
       if (viewMode === 'summary') {
-        thead.innerHTML = `
-          <tr>
-            <th class="py-3 px-3">Color</th>
-            <th class="py-3 px-2 text-center">Sz 4</th>
-            <th class="py-3 px-2 text-center">Sz 5</th>
-            <th class="py-3 px-2 text-center">Sz 6</th>
-            <th class="py-3 px-2 text-center">Sz 7</th>
-            <th class="py-3 px-2 text-center">Sz 8</th>
-            <th class="py-3 px-2 text-center">Other Sz</th>
-            <th class="py-3 px-3 text-right">Prod.</th>
-            <th class="py-3 px-3 text-right">Orders</th>
-            <th class="py-3 px-3 text-right">Stock</th>
-            <th class="py-3 px-3 text-right">Balance</th>
-            <th class="py-3 px-3">Status</th>
-          </tr>
-        `;
-
-        const filtered = currentData.colors.filter((c) => {
+        thead.innerHTML = `<tr><th class="py-3 px-3">Color</th>${['4','5','6','7','8'].map(s => `<th class="py-3 px-2 text-center">Sz ${s}</th>`).join('')}<th class="py-3 px-2 text-center">Other</th><th class="py-3 px-3 text-right">Prod.</th><th class="py-3 px-3 text-right">Orders</th><th class="py-3 px-3 text-right">Stock</th><th class="py-3 px-3 text-right">Balance</th><th class="py-3 px-3">Status</th></tr>`;
+        tbody.innerHTML = currentData.colors.filter(c => {
           if (search && !c.name.toLowerCase().includes(search)) return false;
           if (statusFilter === 'LOW' && c.balance >= 0) return false;
           if (statusFilter === 'ZERO' && c.orders !== 0) return false;
           return true;
-        });
-
-        tbody.innerHTML = filtered
-          .map((c) => {
-            const otherSizesSum = ['1', '2', '3', '9', '10', '11', '12', '13'].reduce((acc, s) => acc + (c.sizes[s] || 0), 0);
-            const statusBadge =
-              c.balance < 0
-                ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">Critical Low</span>'
-                : c.orders === 0
-                ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">Zero Demand</span>'
-                : '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">Balanced</span>';
-
-            return `
-              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
-                <td class="py-2.5 px-3 font-semibold flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600" style="background:${c.hex}"></span>
-                  ${c.name}
-                </td>
-                <td class="py-2.5 px-2 text-center">${c.sizes['4'] || 0}</td>
-                <td class="py-2.5 px-2 text-center">${c.sizes['5'] || 0}</td>
-                <td class="py-2.5 px-2 text-center">${c.sizes['6'] || 0}</td>
-                <td class="py-2.5 px-2 text-center font-semibold">${c.sizes['7'] || 0}</td>
-                <td class="py-2.5 px-2 text-center font-semibold">${c.sizes['8'] || 0}</td>
-                <td class="py-2.5 px-2 text-center text-slate-400">${otherSizesSum}</td>
-                <td class="py-2.5 px-3 text-right">${c.production}</td>
-                <td class="py-2.5 px-3 text-right font-bold text-indigo-600 dark:text-indigo-400">${c.orders}</td>
-                <td class="py-2.5 px-3 text-right">${c.stock}</td>
-                <td class="py-2.5 px-3 text-right font-bold ${c.balance < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'}">${c.balance}</td>
-                <td class="py-2.5 px-3">${statusBadge}</td>
-              </tr>
-            `;
-          })
-          .join('');
+        }).map(c => {
+          const other = ['1','2','3','9','10','11','12','13'].reduce((a, s) => a + (c.sizes[s] || 0), 0);
+          const badge = c.balance < 0 ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">Critical Low</span>'
+            : c.orders === 0 ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">Zero Demand</span>'
+            : '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">Balanced</span>';
+          return `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+            <td class="py-2.5 px-3 font-semibold whitespace-nowrap"><span class="inline-block w-3 h-3 rounded-full border border-slate-300 dark:border-slate-600 mr-2 align-middle" style="background:${c.hex}"></span>${escapeHTML(c.name)}</td>
+            ${['4','5','6','7','8'].map(s => `<td class="py-2.5 px-2 text-center">${c.sizes[s] || 0}</td>`).join('')}
+            <td class="py-2.5 px-2 text-center text-slate-400">${other}</td>
+            <td class="py-2.5 px-3 text-right">${c.production}</td>
+            <td class="py-2.5 px-3 text-right font-bold text-indigo-600 dark:text-indigo-400">${c.orders}</td>
+            <td class="py-2.5 px-3 text-right">${c.stock}</td>
+            <td class="py-2.5 px-3 text-right font-bold ${c.balance < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'}">${c.balance}</td>
+            <td class="py-2.5 px-3">${badge}</td></tr>`;
+        }).join('');
       } else {
-        // Route & Shop Breakdown View
-        thead.innerHTML = `
-          <tr>
-            <th class="py-3 px-3">Distribution Route</th>
-            <th class="py-3 px-3">Shop / Account</th>
-            <th class="py-3 px-3 text-right">Black</th>
-            <th class="py-3 px-3 text-right">Beige</th>
-            <th class="py-3 px-3 text-right">Tan</th>
-            <th class="py-3 px-3 text-right">White</th>
-            <th class="py-3 px-3 text-right">Total Units</th>
-          </tr>
-        `;
-
-        const filteredRoutes = currentData.routes.filter(
-          (r) => !search || r.route.toLowerCase().includes(search) || r.shop.toLowerCase().includes(search)
-        );
-
-        tbody.innerHTML = filteredRoutes
-          .map(
-            (r) => `
-            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
-              <td class="py-2.5 px-3 font-medium text-slate-700 dark:text-slate-300">${r.route}</td>
-              <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">${r.shop}</td>
-              <td class="py-2.5 px-3 text-right">${r.Black}</td>
-              <td class="py-2.5 px-3 text-right">${r.Beige}</td>
-              <td class="py-2.5 px-3 text-right">${r.Tan}</td>
-              <td class="py-2.5 px-3 text-right">${r.White}</td>
-              <td class="py-2.5 px-3 text-right font-bold text-indigo-600 dark:text-indigo-400">${r.total}</td>
-            </tr>
-          `
-          )
-          .join('');
+        thead.innerHTML = `<tr><th class="py-3 px-3">Route</th><th class="py-3 px-3">Shop</th><th class="py-3 px-3 text-right">Black</th><th class="py-3 px-3 text-right">Beige</th><th class="py-3 px-3 text-right">Tan</th><th class="py-3 px-3 text-right">White</th><th class="py-3 px-3 text-right">Total</th></tr>`;
+        tbody.innerHTML = currentData.routes.filter(r => !search || r.route.toLowerCase().includes(search) || r.shop.toLowerCase().includes(search))
+          .map(r => `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+            <td class="py-2.5 px-3 font-medium whitespace-nowrap">${escapeHTML(r.route)}</td>
+            <td class="py-2.5 px-3 font-semibold whitespace-nowrap">${escapeHTML(r.shop)}</td>
+            <td class="py-2.5 px-3 text-right">${r.Black}</td><td class="py-2.5 px-3 text-right">${r.Beige}</td>
+            <td class="py-2.5 px-3 text-right">${r.Tan}</td><td class="py-2.5 px-3 text-right">${r.White}</td>
+            <td class="py-2.5 px-3 text-right font-bold text-indigo-600 dark:text-indigo-400">${r.total}</td></tr>`).join('');
       }
     }
 
-    // =========================================================================
-    // 6. HELPERS: SETTINGS MODAL, THEME TOGGLE & BANNERS
-    // =========================================================================
-    function toggleModal(id) {
-      const el = document.getElementById(id);
-      el.classList.toggle('hidden');
-    }
+    // =====================================================================
+    // 6. HELPERS
+    // =====================================================================
+    function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
 
     function saveAndSyncSettings() {
-      const newSheetId = document.getElementById('inputSheetId').value.trim();
-      const newTabName = document.getElementById('inputTabName').value.trim();
-      if (newSheetId) {
-        CONFIG.sheetId = newSheetId;
-        localStorage.setItem('board_sheet_id', newSheetId);
-      }
-      if (newTabName) {
-        CONFIG.tabName = newTabName;
-        localStorage.setItem('board_tab_name', newTabName);
-      }
+      const url = document.getElementById('inputSheetUrl').value.trim();
+      const tab = document.getElementById('inputTabName').value.trim();
+      CONFIG.autoRefresh = document.getElementById('inputAutoRefresh').checked;
+      if (url) { CONFIG.sheetUrl = url; localStorage.setItem('board_sheet_url', url); }
+      CONFIG.tabName = tab; localStorage.setItem('board_tab_name', tab);
+      localStorage.setItem('board_auto_refresh', CONFIG.autoRefresh ? 'on' : 'off');
+      setupAutoRefresh();
       toggleModal('settingsModal');
       syncGoogleSheet();
     }
 
+    function resetSettings() {
+      localStorage.removeItem('board_sheet_url'); localStorage.removeItem('board_tab_name'); localStorage.removeItem('board_auto_refresh');
+      CONFIG.sheetUrl = DEFAULT_SHEET_URL; CONFIG.tabName = DEFAULT_TAB; CONFIG.autoRefresh = true;
+      fillSettingsForm(); setupAutoRefresh(); toggleModal('settingsModal'); syncGoogleSheet();
+    }
+
+    function fillSettingsForm() {
+      document.getElementById('inputSheetUrl').value = CONFIG.sheetUrl;
+      document.getElementById('inputTabName').value = CONFIG.tabName;
+      document.getElementById('inputAutoRefresh').checked = CONFIG.autoRefresh;
+    }
+
+    function setupAutoRefresh() {
+      if (refreshTimer) clearInterval(refreshTimer);
+      refreshTimer = CONFIG.autoRefresh ? setInterval(syncGoogleSheet, AUTO_REFRESH_SECONDS * 1000) : null;
+    }
+
     function showBanner(type, message) {
-      const banner = document.getElementById('statusBanner');
-      const inner = document.getElementById('statusBannerInner');
-      const text = document.getElementById('statusBannerText');
-
-      banner.classList.remove('hidden');
-      text.textContent = message;
-
-      if (type === 'success') {
-        inner.className =
-          'flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm border bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/50 dark:border-emerald-900/60 dark:text-emerald-300';
-      } else {
-        inner.className =
-          'flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm border bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-950/50 dark:border-amber-900/60 dark:text-amber-300';
-      }
+      document.getElementById('statusBanner').classList.remove('hidden');
+      document.getElementById('statusBannerText').textContent = message;
+      document.getElementById('statusBannerInner').className = 'flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-xs sm:text-sm border ' + (type === 'success'
+        ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/50 dark:border-emerald-900/60 dark:text-emerald-300'
+        : 'bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-950/50 dark:border-amber-900/60 dark:text-amber-300');
     }
 
     function toggleTheme() {
@@ -1167,22 +700,18 @@ const url = `https://docs.google.com/spreadsheets/d/13-zOFdS_F3jh_sXnLoScL3scBxf
     }
 
     function escapeHTML(str) {
-      return String(str).replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+      return String(str ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     }
 
-    // Initialize Theme & Boot Dashboard
     window.addEventListener('DOMContentLoaded', () => {
-      if (
-        localStorage.getItem('board_theme') === 'dark' ||
-        (!localStorage.getItem('board_theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
-      ) {
+      const saved = localStorage.getItem('board_theme');
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
       }
-      document.getElementById('inputSheetId').value = CONFIG.sheetId;
-      document.getElementById('inputTabName').value = CONFIG.tabName;
-
+      fillSettingsForm();
       refreshAllUI();
       syncGoogleSheet();
+      setupAutoRefresh();
     });
   </script>
 </body>
